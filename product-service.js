@@ -1,6 +1,6 @@
 import axios from "axios";
 import { logAndThrow } from "./util.js";
-import { Product } from "./product.js";
+import { ElectronicProduct, Product } from "./product.js";
 
 // ## Product 요청 함수 구현하기
 
@@ -9,13 +9,18 @@ import { Product } from "./product.js";
 //     - `getProductList()` : GET 메소드를 사용해 주세요.
 //         - `page`, `pageSize`, `keyword` 쿼리 파라미터를 이용해 주세요.
 
+const BASE_URL = "https://panda-market-api-crud.vercel.app/products";
+
 export async function getProductList(params) {
   try {
-    const response = await axios.get(
-      "https://panda-market-api-crud.vercel.app/products",
-      { params }
-    );
-    return response.data.list.map(Product.of);
+    if (typeof params !== "object") {
+      throw new Error("invalid parameter", { cause: params });
+    }
+    const response = await axios.get(BASE_URL, { params });
+    if (response.status !== 200) {
+      throw new Error("response failed", { cause: response });
+    }
+    return response.data.list.map(productFromInfo);
   } catch (e) {
     logAndThrow("getting product list", e);
   }
@@ -24,10 +29,11 @@ export async function getProductList(params) {
 //     - `getProduct()` : GET 메소드를 사용해 주세요.
 export async function getProduct(productId) {
   try {
-    const response = await axios.get(
-      `https://panda-market-api-crud.vercel.app/products/${productId}`
-    );
-    return Product.of(response.data);
+    const response = await axios.get(`${BASE_URL}/${productId}`);
+    if (response.status !== 200) {
+      throw new Error("response failed", { cause: response });
+    }
+    return productFromInfo(response.data);
   } catch (e) {
     logAndThrow("getting product", e);
   }
@@ -37,9 +43,10 @@ export async function getProduct(productId) {
 //         - request body에 `title`, `content`, `image` 를 포함해 주세요.
 export async function createProduct(product) {
   try {
-    const response = await axios.post(
-      "https://panda-market-api-crud.vercel.app/products"
-    );
+    const response = await axios.post(BASE_URL);
+    if (response.status !== 200) {
+      throw new Error("response failed", { cause: response });
+    }
     return response.data;
   } catch (e) {
     logAndThrow("creating product", e);
@@ -49,10 +56,10 @@ export async function createProduct(product) {
 //     - `patchProduct()` : PATCH 메소드를 사용해 주세요.
 export async function patchProduct(id, product) {
   try {
-    const response = await axios.patch(
-      `https://panda-market-api-crud.vercel.app/products/${productId}`,
-      product
-    );
+    const response = await axios.patch(`${BASE_URL}/${productId}`, product);
+    if (response.status !== 200) {
+      throw new Error("response failed", { cause: response });
+    }
     return response.data;
   } catch (e) {
     logAndThrow("patching product", e);
@@ -62,11 +69,34 @@ export async function patchProduct(id, product) {
 //     - `deleteProduct()` : DELETE 메소드를 사용해 주세요.
 export async function deleteProduct(productId) {
   try {
-    const response = await axios.delete(
-      `https://panda-market-api-crud.vercel.app/products/${productId}`
-    );
-    return Product.of(response.data);
+    const response = await axios.delete(`${BASE_URL}/${productId}`);
+    if (response.status !== 200) {
+      throw new Error("response failed", { cause: response });
+    }
+    return response.data.id;
   } catch (e) {
     logAndThrow("deleting product", e);
   }
 } //     - ElectronicProduct 클래스는 Product를 상속하며, 추가로 `manufacturer`(제조사) 프로퍼티를 가집니다.
+
+function productFromInfo({
+  name,
+  description,
+  price,
+  tags,
+  images,
+  manufacturer,
+}) {
+  if (tags.includes("전자제품")) {
+    return ElectronicProduct(
+      name,
+      description,
+      price,
+      tags,
+      images,
+      manufacturer
+    );
+  }
+
+  return Product(name, description, price, tags, images);
+}

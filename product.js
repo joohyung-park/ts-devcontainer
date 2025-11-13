@@ -24,10 +24,6 @@ export class Product {
     // getter 숨겨둔 내부 상태를 보여줄 필요가 있을때
     return this.#favoriteCount;
   }
-
-  static of({ name, description, price, tags, images }) {
-    return new Product(name, description, price, tags, images);
-  }
 }
 export class ElectronicProduct extends Product {
   constructor(name, description, price, tags, images, manufacturer) {
