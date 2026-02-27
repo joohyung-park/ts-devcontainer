@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Group {
+  id                 BigInt   @id @default(autoincrement())
+  name               String
+  tags               String[]
+  goal_reps          Int
+  image              String?
+  discord_web_url    String
+  discord_server_url String
+  like_count         Int
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime? @updatedAt @db.Timestamptz(6)
+
+  owner   Owner?
+  users   User[]
+  badges  Badge[]
+}
+
+model Owner {
+  id                 BigInt   @id @default(autoincrement())
+
+  user_id BigInt @unique
+  user User @relation(fields: [user_id], references: [id])
+  group_id BigInt @unique
+  group Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
+}
+
+
+
+model User {
+  id       BigInt @id @default(autoincrement())
+  name     String
+  password String
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime? @updatedAt @db.Timestamptz(6)
+
+  group_id BigInt
+  group    Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
+
+  ownedOwner Owner?
+
+  workoutLogs WorkoutLog[]
+}
+
+model WorkoutLog {
+  id          BigInt   @id @default(autoincrement())
+  category    String
+  description String
+  time        DateTime
+  distance    Int
+  images      String[]
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+  
+  user_id BigInt
+  user    User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("workout_log")
+}
+
+model Badge {
+  id         BigInt   @id @default(autoincrement())
+  content    String
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  group_id BigInt
+  group    Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
+}
